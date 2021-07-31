@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Livemasjid",
+        "description": "Do you want to set up Livemasjid?"
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Livemasjid Configuration",
+        "description": "Please select your preferred stream as well as your preferred media player device",
+        "data": {
+          "subscriptions": "Livemasjid Subscriptions",
+          "entities": "Target Entities"
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "action_type": {
+      "turn_on": "Turn on {entity_name}",
+      "turn_off": "Turn off {entity_name}"
+    }
+  }
+}
