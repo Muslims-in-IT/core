@@ -20,18 +20,15 @@
     "step": {
       "init": {
         "title": "Livemasjid Configuration",
-        "description": "Please select your preferred stream as well as your preferred media player device",
+        "description": "Please select your Primary Subscription, Optional subscriptions as well as other streams of interest.\n\nThe Primary subscription will always be streamed when that stream starts.\n\nAlternate streams will be available as entities and will keep their states updated.\n\nYou can also select your preferred media player device and optionally alternate media players.",
         "data": {
-          "subscriptions": "Livemasjid Subscriptions",
-          "entities": "Target Entities"
+          "primary_subscription": "Primary Subscription",
+          "alternate_subscriptions": "Alternate Subscriptions (Comma seperated list)",
+          "alternate_streams": "Alternate Streams (Comma seperated list)",
+          "primary_device": "Primary Device",
+          "alternate_devices": "Alternate Devices (Comma seperated list)"
         }
       }
-    }
-  },
-  "device_automation": {
-    "action_type": {
-      "turn_on": "Turn on {entity_name}",
-      "turn_off": "Turn off {entity_name}"
     }
   }
 }
