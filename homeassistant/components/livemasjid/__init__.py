@@ -6,7 +6,9 @@ import threading
 
 from livemasjid import Livemasjid
 
+import homeassistant.components.media_player as mp
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
@@ -23,25 +25,48 @@ class LivemasjidUpdateListener:
 
     def __init__(self, client, hass, entry):
         """Initialize the livemasjid listener."""
-        self.hass = hass
+        self.hass: HomeAssistant = hass
         self.entry = entry
         self.client: Livemasjid = client
         self.thread = threading.Thread(target=self.retrieve_pushes)
         self.thread.daemon = True
         self.thread.start()
+        self.active_stream = "idle"
 
     def on_push(self, topic, message, status):
         """Update the current data."""
-        _LOGGER.warning(
-            f"Received message for topic: {topic}: {message}, state: {status}"
-        )
         subscriptions = self.entry.options["subscriptions"]
+
         if topic not in subscriptions:
             return
 
-        # registry_entities = await entity_registry.async_get_registry(self.hass)
-        # entity_to_update = registry_entities.async_get(f"sensor.{topic}")
-        # _LOGGER.warning(entity_to_update)
+        if message == "stopped":
+            if self.active_stream == topic:
+                self.active_stream = "idle"
+            return
+
+        primary_subscription = self.entry.options["primary_subscription"]
+
+        if self.active_stream == primary_subscription:
+            return
+        alternate_devices = self.entry.options["alternate_devices"]
+        media_player_entity = self.entry.options["primary_device"]
+        devices = [media_player_entity] + alternate_devices
+
+        for device in devices:
+            self.hass.services.call(
+                mp.DOMAIN,
+                mp.SERVICE_PLAY_MEDIA,
+                {
+                    ATTR_ENTITY_ID: device,
+                    mp.ATTR_MEDIA_CONTENT_ID: status["stream_url"]
+                    if status["stream_url"]
+                    else f"https://relay.livemasjid.com:8443/{topic}",
+                    mp.ATTR_MEDIA_CONTENT_TYPE: status["stream_type"]
+                    if status["stream_type"]
+                    else "audio/opus",
+                },
+            )
 
     def retrieve_pushes(self):
         """Retrieve_pushes.
@@ -49,14 +74,7 @@ class LivemasjidUpdateListener:
         Spawn a new Listener and links it to self.on_push.
         """
         self.client.register_on_message_callback(self.on_push)
-
-        try:
-            self.client.start()
-        finally:
-            self.client.register_on_message_callback(None)
-            _LOGGER.info(
-                "We need to kill the client, but the API does not provide for this currently"
-            )
+        self.client.start()
 
 
 async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -82,6 +100,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    lm: Livemasjid = hass.data[DOMAIN][entry.entry_id].get("client")
+    lm.client.loop_stop(force=True)
+
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)

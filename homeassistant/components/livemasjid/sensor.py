@@ -88,10 +88,11 @@ class LivemasjidActiveStreamSensor(SensorEntity):
     _attr_icon = LIVEMASJID_SENSOR_ICON
     _attr_should_poll = False
 
-    def __init__(self, sensor_type):
+    def __init__(self, sensor_type, initial_state="idle"):
         """Initialize the Livemasjid sensor."""
         self.sensor_type = sensor_type
         self._attributes = None
+        self._state = initial_state
 
     @property
     def name(self):
@@ -106,7 +107,7 @@ class LivemasjidActiveStreamSensor(SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return "idle"
+        return self._state
 
     async def async_added_to_hass(self):
         """Handle entity which will be added."""
